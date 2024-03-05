@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Container, Row, Form, Dropdown, Modal, Button, DropdownButton, Col } from 'react-bootstrap';
+import { Container, Row, Form, Modal, Button, Col } from 'react-bootstrap';
+import {fetchWorkoutNames, fetchWorkoutExcersises, putExcersisePortion} from '../service/WorkoutService.js';
 
 function CreateWorkout() {
-    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const [selectedWorkoutId, setSelectedWorkoutId] = useState(null);
     const [workoutPlan, setWorkoutPlan] = useState([]);
     const [workouts, setWorkouts] = useState([]);
     const [selectedWorkout, setSelectedWorkout] = useState(null);
@@ -11,49 +12,38 @@ function CreateWorkout() {
         sets: '',
         reps: '',
         weight: '',
-        workoutName: '',
-        image: null,
+        name: ''
     });
 
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-              //const response = await fetch('https://api.example.com/user/workout');
-              //const result = await response.json();
-              //TODO: Remove this default when backend is ready
-              const defaultWorkouts = [
-                { id: 1, name: 'Upper body' },
-                { id: 2, name: 'Legs' },
-                { id: 3, name: 'Core' },
-                { id: 4, name: 'Cardio' },
-              ];
-              setWorkouts(defaultWorkouts);
-            } catch (error) {
-              console.error('Error fetching data:', error);
-            }
-        };
-        fetchData();
+        fetchWorkoutNames(1)
+            .then(workoutNames => {
+                console.log(workoutNames);
+                setWorkouts(workoutNames);
+            })
+            .catch(error => {
+                // Handle any errors
+                console.error(error);
+            });
     }, []);
 
-    const handleWorkoutSelect = (workout) => {
-        console.log(workoutPlan);
+    const handleWorkoutSelect = (id, workout) => {
+        console.log(id + " " + workout);
         setSelectedWorkout(workout);
-        setWorkoutPlan(getWorkoutPlan(workout));
-        console.log(workoutPlan);
-        setIsDropdownOpen(false);
+        setSelectedWorkoutId(id);
+        getWorkoutPlan(1, id);
     };
 
-    const getWorkoutPlan = (workout) => {
-        //TODO: Add call to backend for given workout
-        console.log(workout);
-        const defaultWorkouts = {
-            "Upper body": [
-                {id: 1, item : { "name": "dumbell curl", reps: 1, sets: 2, weight: 100}},
-                {id:2, item : { name: "bench press", reps: 1, sets: 2, weight: 1200}}
-            ]
-        }
-        console.log(defaultWorkouts[workout]);
-        return defaultWorkouts[workout];
+    const getWorkoutPlan = async (id, workoutId) => {
+        await fetchWorkoutExcersises(id, workoutId)
+            .then(workout => {
+                console.log(workout);
+                setWorkoutPlan(workout);
+            })
+            .catch(error => {
+                // Handle any errors
+                console.error(error);
+            });
     }
 
     const handleModalClose = () => {
@@ -69,22 +59,25 @@ function CreateWorkout() {
         setFormData({ ...formData, [name]: value });
     };
 
-    const handleImageChange = (e) => {
-        const imageFile = e.target.files[0];
-        setFormData({ ...formData, image: imageFile });
-    };
-
-    const handleAddPortion = () => {
+    const handleAddPortion = async () => {
         // Handle adding portion logic here
         console.log('Adding portion:', formData);
-        //TODO: add call to backend to save the changes to workout
-        // Clear form data
+        await putExcersisePortion(1, selectedWorkoutId, formData)
+            .then(workout => {
+                setWorkoutPlan(workout);
+            })
+            .catch(error => {
+                // Handle any errors
+                console.error(error);
+            });
+        
+        setWorkoutPlan([...workoutPlan, formData]);
+
         setFormData({
             sets: '',
             reps: '',
             weight: '',
-            workoutName: '',
-            image: null,
+            name: '',
         });
         // Close the modal
         handleModalClose();
@@ -98,7 +91,7 @@ function CreateWorkout() {
             <Row>
                 {workouts.map((item, index) => (
                     <Col className='col-2 mr-auto'>
-                        <Button key={index} onClick={() => handleWorkoutSelect(item.name)}>
+                        <Button key={index} onClick={() => handleWorkoutSelect(item.id, item.name)}>
                         {item.name}
                         </Button> 
                     </Col>
@@ -111,22 +104,20 @@ function CreateWorkout() {
                 {workoutPlan.map((item, index) => (
                     <Row key={index}>
                         <Col className="col-6">
-                            <p>{item.item.name}</p>
+                            <p>{item.name}</p>
                         </Col>
                         <Col className='col-2'>
-                            <p>{item.item.reps}</p>
+                            <p>{item.reps}</p>
                         </Col>
                         <Col className='col-2'>
-                            <p>{item.item.sets}</p>
+                            <p>{item.sets}</p>
                         </Col>
                         <Col className='col-2'>
-                            <p>{item.item.weight}</p>
+                            <p>{item.weight}</p>
                         </Col>
                     </Row>
                 ))}
-            
-            
-            
+             
             <Row>
                 {selectedWorkout && <Button variant="success" onClick={handleModalShow}>Add an excersise</Button>}
             </Row>
@@ -138,6 +129,16 @@ function CreateWorkout() {
                     </Modal.Header>
                     <Modal.Body>
                         <Form>
+                            <Form.Group controlId="formWorkoutName">
+                                <Form.Label>Workout Name</Form.Label>
+                                <Form.Control
+                                    type="text"
+                                    placeholder="Enter workout name"
+                                    name="name"
+                                    value={formData.name}
+                                    onChange={handleChange}
+                                />
+                            </Form.Group>
                             <Form.Group controlId="formSets">
                                 <Form.Label>Sets</Form.Label>
                                 <Form.Control
@@ -168,24 +169,7 @@ function CreateWorkout() {
                                     onChange={handleChange}
                                 />
                             </Form.Group>
-                            <Form.Group controlId="formWorkoutName">
-                                <Form.Label>Workout Name</Form.Label>
-                                <Form.Control
-                                    type="text"
-                                    placeholder="Enter workout name"
-                                    name="workoutName"
-                                    value={formData.workoutName}
-                                    onChange={handleChange}
-                                />
-                            </Form.Group>
-                            <Form.Group controlId="formImage">
-                                <Form.Label>Upload Image (Optional)</Form.Label>
-                                <Form.Control
-                                    type="file"
-                                    name="image"
-                                    onChange={handleImageChange}
-                                />
-                            </Form.Group>
+                            
                         </Form>
                     </Modal.Body>
                     <Modal.Footer>
