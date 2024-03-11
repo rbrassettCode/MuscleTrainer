@@ -26,27 +26,27 @@ class WorkoutListByAccount(generics.ListAPIView):
     serializer_class = WorkoutNameSerializer
 
     def get_queryset(self):
-        account_id = self.kwargs['account_id']  # Get account ID from URL
-        return Workout.objects.filter(accountId=account_id)
+        user = self.kwargs['user']  # Get account ID from URL
+        return Workout.objects.filter(user=user)
     
 class ExerciseListByWorkout(generics.ListAPIView):
     serializer_class = ExerciseSerializer
 
     def get_queryset(self):
         workout_id = self.kwargs['workout_id']
-        account_id = self.kwargs['account_id']
-        return Exercise.objects.filter(workout__id=workout_id, workout__accountId=account_id)
+        user = self.kwargs['user']
+        return Exercise.objects.filter(workout__id=workout_id, workout__user=user)
 
 class AddExerciseToWorkout(generics.UpdateAPIView):
     serializer_class = ExerciseSerializer
 
     def update(self, request, *args, **kwargs):
         workout_id = kwargs['workout_id']
-        account_id = kwargs['account_id']
+        user = kwargs['user']
         exercise_data = request.data
 
         try:
-            workout = Workout.objects.get(id=workout_id, accountId=account_id)
+            workout = Workout.objects.get(id=workout_id, user=user)
         except Workout.DoesNotExist:
             return Response({'error': 'Workout not found'}, status=status.HTTP_404_NOT_FOUND)
 
