@@ -1,9 +1,14 @@
 from django.shortcuts import render
 from rest_framework import generics
+from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from .models import Workout, Exercise
-from .serializers import ExerciseSerializer, WorkoutNameSerializer, WorkoutSerializer
+from django.contrib.auth import logout, login
+from rest_framework_simplejwt.tokens import RefreshToken
+from .serializers import ExerciseSerializer, WorkoutNameSerializer, WorkoutSerializer, UserSerializer, LoginSerializer
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework.permissions import IsAuthenticated
 
 # Create your views here.
 class WorkoutCreate(generics.CreateAPIView):
@@ -52,3 +57,33 @@ class AddExerciseToWorkout(generics.UpdateAPIView):
             return Response({'success': 'Exercise added to workout'}, status=status.HTTP_200_OK)
         else:
             return Response(exercise_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class UserRegistration(APIView):
+    def post(self, request):
+        serializer = UserSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class UserLogin(APIView):
+    def post(self, request):
+        serializer = LoginSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.validated_data['user']
+            refresh = RefreshToken.for_user(user)
+            login(request, user)
+            return Response({
+                "message": "Login successful",
+                "refresh": str(refresh),
+                "access": str(refresh.access_token)
+                }, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class UserLogout(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        logout(request)
+        return Response({"message": "Logout successful"}, status=status.HTTP_200_OK)
