@@ -1,10 +1,11 @@
 import React, {useEffect, useState} from 'react';
 import { Navbar, Nav, Button, Modal, Form } from 'react-bootstrap';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
 import {registerNewUser, loginUser, logoutUser} from './service/AuthService.js';
 import HomePage from './pages/HomePage';
 import CreateWorkout from './pages/CreateWorkout';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import RegisterUser from './pages/RegisterUser.js';
 
 function App() {
     const [accessToken, setAccessToken] = useState(localStorage.getItem('accessToken') || '');
@@ -77,6 +78,7 @@ function App() {
             <Routes>
                 <Route path="/" element={<HomePage />} />
                 <Route path="/create-workout" element={<CreateWorkout />} />
+                <Route path='/user/registration' element={<RegisterUser/>} />
             </Routes>
             </div>
             <Modal show={showLoginModal} onHide={handleLoginModalClose}>
@@ -108,6 +110,9 @@ function App() {
                         </Form>
                     </Modal.Body>
                     <Modal.Footer>
+                        <Link to='/user/registration'>
+                            <Button variant="secondary" onClick={handleLoginModalClose}>Sign Up</Button>
+                        </Link>
                         <Button variant="secondary" onClick={handleLoginModalClose}>Close</Button>
                         <Button variant="primary" onClick={handleLogin}>Login</Button>
                     </Modal.Footer>

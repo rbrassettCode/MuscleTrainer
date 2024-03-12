@@ -1,7 +1,8 @@
-const registerNewUser = (username, password) => {
+const registerNewUser = (body) => {
+    console.log(JSON.stringify(body));
     return fetch('http://localhost:8000/api/user/register/', {
         method: 'POST',
-        body: JSON.stringify({ username: username, password: password }),
+        body: JSON.stringify(body),
         headers: {
             'Content-Type': 'application/json',
             // Add any additional headers if needed

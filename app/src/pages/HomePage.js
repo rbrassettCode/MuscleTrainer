@@ -1,5 +1,6 @@
 import React from 'react';
-import { Container, Row } from 'react-bootstrap';
+import { Button, Container, Row } from 'react-bootstrap';
+import { Link } from 'react-router-dom';
 
 function HomePage({ exercise, onDelete }) {
     return (
@@ -8,7 +9,12 @@ function HomePage({ exercise, onDelete }) {
                 <h2>HomePage</h2>
             </Row>
             <Row>
-                <p>Welcome to your new healthier, loving lifestyle</p>
+                <p>Welcome to your new healthier, loving lifestyle. Register for free below:</p>
+            </Row>
+            <Row>
+                <Link to='/user/registration'>
+                    <Button variant="secondary" >Sign Up</Button>
+                    </Link>
             </Row>
         </Container>
     );
