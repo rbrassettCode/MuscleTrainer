@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { Container, Row, Form, Modal, Button, Col } from 'react-bootstrap';
-import {fetchWorkoutNames, fetchWorkoutExcersises, putExcersisePortion} from '../service/WorkoutService.js';
+import {fetchWorkoutNames, fetchWorkoutExcersises, putExcersisePortion, createWorkout} from '../service/WorkoutService.js';
 
 function CreateWorkout() {
     const [selectedWorkoutId, setSelectedWorkoutId] = useState(null);
     const [workoutPlan, setWorkoutPlan] = useState([]);
     const [workouts, setWorkouts] = useState([]);
     const [selectedWorkout, setSelectedWorkout] = useState(null);
-    const [showModal, setShowModal] = useState(false);
+    const [showModalAddPortion, setShowModalAddPortion] = useState(false);
+    const [showCreateWorkout, setShowCreateWorkout] = useState(false);
+    const [workoutName, setWorkoutName] = useState('');
     const [formData, setFormData] = useState({
         sets: '',
         reps: '',
@@ -46,12 +48,12 @@ function CreateWorkout() {
             });
     }
 
-    const handleModalClose = () => {
-        setShowModal(false);
+    const handleModalCloseAddPortion = () => {
+        setShowModalAddPortion(false);
     };
 
     const handleModalShow = () => {
-        setShowModal(true);
+        setShowModalAddPortion(true);
     };
 
     const handleChange = (e) => {
@@ -80,8 +82,32 @@ function CreateWorkout() {
             name: '',
         });
         // Close the modal
-        handleModalClose();
+        handleModalCloseAddPortion();
     };
+
+    const handleCreateWorkout = async () => {
+        var body = {
+            'name': workoutName,
+            'user': 1,
+            'exercises': []
+        }
+        await createWorkout(body)
+            .then(response => {
+                console.log(response);
+                var newWorkout = {
+                    'name': workoutName, 
+                    'id': response['id']
+                };
+                setWorkouts(prevWorkouts => [...prevWorkouts, newWorkout]);
+                setWorkoutName('');
+        })
+        .catch(error => {
+            // Handle any errors
+            console.error(error);
+        });
+        console.log("created a new workout: " + workoutName);
+        setShowCreateWorkout(false)
+    }
 
     return (
         <Container>
@@ -90,12 +116,39 @@ function CreateWorkout() {
             </Row>
             <Row>
                 {workouts.map((item, index) => (
-                    <Col className='col-2 mr-auto'>
+                    <Col className='col-2 m-2'>
                         <Button key={index} onClick={() => handleWorkoutSelect(item.id, item.name)}>
                         {item.name}
                         </Button> 
                     </Col>
                 ))}
+                <Col>
+                    <Button onClick={() => setShowCreateWorkout(true)}>
+                        Create New Workout +
+                    </Button>
+                </Col>
+            </Row>
+            <Row>
+            <Modal show={showCreateWorkout}>
+                <Modal.Header closeButton>
+                    <Modal.Title>Create New Workout</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <Form.Group controlId="workoutName">
+                        <Form.Label>Workout Name</Form.Label>
+                        <Form.Control
+                            type="text"
+                            placeholder="Enter workout name"
+                            value={workoutName}
+                            onChange={(e) => setWorkoutName(e.target.value)}
+                        />
+                    </Form.Group>
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" onClick={() => setShowCreateWorkout(false)}>Cancel</Button>
+                    <Button variant="primary" onClick={handleCreateWorkout}>Create</Button>
+                </Modal.Footer>
+            </Modal>
             </Row>
             <Row>
                 <h2>Current Workout: {selectedWorkout}</h2>
@@ -123,7 +176,7 @@ function CreateWorkout() {
             </Row>
             {/* Modal for adding new portion */}
             <Row>
-                <Modal show={showModal} onHide={handleModalClose}>
+                <Modal show={showModalAddPortion} onHide={handleModalCloseAddPortion}>
                     <Modal.Header closeButton>
                         <Modal.Title>Add New Portion</Modal.Title>
                     </Modal.Header>
@@ -173,7 +226,7 @@ function CreateWorkout() {
                         </Form>
                     </Modal.Body>
                     <Modal.Footer>
-                        <Button variant="secondary" onClick={handleModalClose}>
+                        <Button variant="secondary" onClick={handleModalCloseAddPortion}>
                             Close
                         </Button>
                         <Button variant="primary" onClick={handleAddPortion}>

@@ -1,5 +1,4 @@
 const fetchWorkoutNames = (id) => {
-    console.log('hello');
     return fetch('http://localhost:8000/api/workouts/account/' + id, {
         method: 'GET',
         headers: {
@@ -84,8 +83,39 @@ const putExcersisePortion = (userId, workoutId, body) => {
     });
 };
 
+const createWorkout = (body) => {
+    return fetch('http://localhost:8000/api/workouts/create/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            // Add any additional headers if needed
+        },
+        body: JSON.stringify(body)
+    })
+    .then(response => {
+        // Check if the response is successful
+        if (!response.ok) {
+            console.log(response.json());
+            throw new Error('Network response was not ok');
+        }
+        // Parse the JSON response
+        return response.json();
+    })
+    .then(data => {
+        // Process the retrieved workout names\
+        console.log(data);
+        return data;
+    })
+    .catch(error => {
+        // Handle any errors that occurred during the fetch
+        console.error('There was a problem with your create operation:', error);
+        throw error;
+    });
+};
+
 export {
     fetchWorkoutNames,
     fetchWorkoutExcersises,
     putExcersisePortion,
+    createWorkout,
 };
